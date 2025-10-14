@@ -8,48 +8,30 @@ resource "helm_release" "metrics_server" {
   keyring    = ""
 
   # If true, allow unauthenticated access to /metrics.
-  set {
-    name  = "metrics.enabled"
-    value = false
-  }
-
-  dynamic "set" {
-    for_each = var.node_selector
-    content {
-      name  = "nodeSelector.${set.key}"
-      value = set.value
-    }
-  }
-
-  dynamic "set" {
-    for_each = var.tolerations
-    content {
-      name  = "tolerations[${set.key}].key"
-      value = lookup(set.value, "key", "")
-    }
-  }
-
-  dynamic "set" {
-    for_each = var.tolerations
-    content {
-      name  = "tolerations[${set.key}].operator"
-      value = lookup(set.value, "operator", "")
-    }
-  }
-
-  dynamic "set" {
-    for_each = var.tolerations
-    content {
-      name  = "tolerations[${set.key}].value"
-      value = lookup(set.value, "value", "")
-    }
-  }
-
-  dynamic "set" {
-    for_each = var.tolerations
-    content {
-      name  = "tolerations[${set.key}].effect"
-      value = lookup(set.value, "effect", "")
-    }
-  }
+  set = flatten([
+    [{
+      name  = "metrics.enabled"
+      value = false
+    }],
+    [for key, value in var.node_selector : {
+      name  = "nodeSelector.${key}"
+      value = value
+    }],
+    [for key, value in var.tolerations : {
+      name  = "tolerations[${key}].key"
+      value = lookup(value, "key", "")
+    }],
+    [for key, value in var.tolerations : {
+      name  = "tolerations[${key}].operator"
+      value = lookup(value, "operator", "")
+    }],
+    [for key, value in var.tolerations : {
+      name  = "tolerations[${key}].value"
+      value = lookup(value, "value", "")
+    }],
+    [for key, value in var.tolerations : {
+      name  = "tolerations[${key}].effect"
+      value = lookup(value, "effect", "")
+    }],
+  ])
 }
